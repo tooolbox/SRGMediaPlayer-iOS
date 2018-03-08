@@ -27,6 +27,7 @@ static void commonInit(SRGAirplayButton *self);
 @implementation SRGAirplayButton
 
 @synthesize image = _image;
+@synthesize audioImage = _audioImage;
 @synthesize activeTintColor = _activeTintColor;
 
 #pragma mark Object lifecycle
@@ -113,9 +114,20 @@ static void commonInit(SRGAirplayButton *self);
     return _image ?: [UIImage imageNamed:@"airplay" inBundle:[NSBundle srg_mediaPlayerBundle] compatibleWithTraitCollection:nil];
 }
 
+- (UIImage *)audioImage
+{
+    return _audioImage ?: [UIImage imageNamed:@"airplay_audio" inBundle:[NSBundle srg_mediaPlayerBundle] compatibleWithTraitCollection:nil];
+}
+
 - (void)setImage:(UIImage *)image
 {
     _image = image;
+    [self updateAppearance];
+}
+
+- (void)setAudioImage:(UIImage *)audioImage
+{
+    _audioImage = audioImage;
     [self updateAppearance];
 }
 
@@ -178,21 +190,29 @@ static void commonInit(SRGAirplayButton *self);
 
 - (void)updateAppearanceForMediaPlayerController:(SRGMediaPlayerController *)mediaPlayerController
 {
-    // Replace with custom image to be able to apply a tint color. The button color is automagically inherited from
-    // the enclosing view (this works both at runtime and when rendering in Interface Builder)
     UIButton *airplayButton = self.volumeView.srg_airplayButton;
     airplayButton.showsTouchWhenHighlighted = NO;
-    [airplayButton setImage:self.image forState:UIControlStateNormal];
-    [airplayButton setImage:self.image forState:UIControlStateSelected];
     
     if (self.alwaysHidden) {
         self.hidden = YES;
     }
     else if (mediaPlayerController) {
-        BOOL allowsAirplayPlayback = mediaPlayerController.mediaType != SRGMediaPlayerMediaTypeVideo || mediaPlayerController.allowsExternalNonMirroredPlayback;
-        if (self.volumeView.areWirelessRoutesAvailable && allowsAirplayPlayback) {
-            airplayButton.tintColor = [AVAudioSession srg_isAirplayActive] ? self.activeTintColor : self.tintColor;
-            self.hidden = NO;
+        SRGMediaPlayerMediaType mediaType = mediaPlayerController.mediaType;
+        if (mediaType != SRGMediaPlayerMediaTypeUnknown) {
+            BOOL allowsAirplayPlayback = mediaType != SRGMediaPlayerMediaTypeVideo || mediaPlayerController.allowsExternalNonMirroredPlayback;
+            if (self.volumeView.areWirelessRoutesAvailable && allowsAirplayPlayback) {
+                // Replace with custom image to be able to apply a tint color. The button color is automagically inherited from
+                // the enclosing view (this works both at runtime and when rendering in Interface Builder)
+                UIImage *image = (mediaType == SRGMediaPlayerMediaTypeAudio) ? self.audioImage : self.image;
+                [airplayButton setImage:image forState:UIControlStateNormal];
+                [airplayButton setImage:image forState:UIControlStateSelected];
+                airplayButton.tintColor = [AVAudioSession srg_isAirplayActive] ? self.activeTintColor : self.tintColor;
+                
+                self.hidden = NO;
+            }
+            else {
+                self.hidden = YES;
+            }
         }
         else {
             self.hidden = YES;

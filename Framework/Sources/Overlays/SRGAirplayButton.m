@@ -198,21 +198,16 @@ static void commonInit(SRGAirplayButton *self);
     }
     else if (mediaPlayerController) {
         SRGMediaPlayerMediaType mediaType = mediaPlayerController.mediaType;
-        if (mediaType != SRGMediaPlayerMediaTypeUnknown) {
-            BOOL allowsAirplayPlayback = mediaType != SRGMediaPlayerMediaTypeVideo || mediaPlayerController.allowsExternalNonMirroredPlayback;
-            if (self.volumeView.areWirelessRoutesAvailable && allowsAirplayPlayback) {
-                // Replace with custom image to be able to apply a tint color. The button color is automagically inherited from
-                // the enclosing view (this works both at runtime and when rendering in Interface Builder)
-                UIImage *image = (mediaType == SRGMediaPlayerMediaTypeAudio) ? self.audioImage : self.image;
-                [airplayButton setImage:image forState:UIControlStateNormal];
-                [airplayButton setImage:image forState:UIControlStateSelected];
-                airplayButton.tintColor = [AVAudioSession srg_isAirplayActive] ? self.activeTintColor : self.tintColor;
-                
-                self.hidden = NO;
-            }
-            else {
-                self.hidden = YES;
-            }
+        BOOL allowsAirplayPlayback = mediaType != SRGMediaPlayerMediaTypeVideo || mediaPlayerController.allowsExternalNonMirroredPlayback;
+        if (self.volumeView.areWirelessRoutesAvailable && allowsAirplayPlayback) {
+            // Replace with custom image to be able to apply a tint color. The button color is automagically inherited from
+            // the enclosing view (this works both at runtime and when rendering in Interface Builder)
+            UIImage *image = (mediaType == SRGMediaPlayerMediaTypeVideo) ? self.image : self.audioImage;
+            [airplayButton setImage:image forState:UIControlStateNormal];
+            [airplayButton setImage:image forState:UIControlStateSelected];
+            airplayButton.tintColor = [AVAudioSession srg_isAirplayActive] ? self.activeTintColor : self.tintColor;
+            
+            self.hidden = NO;
         }
         else {
             self.hidden = YES;
